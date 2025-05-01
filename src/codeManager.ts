@@ -25,6 +25,7 @@ export class CodeManager implements vscode.Disposable {
     private _config: vscode.WorkspaceConfiguration;
     private _appInsightsClient: AppInsightsClient;
     private _TERMINAL_DEFAULT_SHELL_WINDOWS: string | null = null;
+    private _closePromise: Promise<void> = null;
 
     constructor() {
         this._outputChannel = vscode.window.createOutputChannel("Code");
@@ -103,9 +104,9 @@ export class CodeManager implements vscode.Disposable {
         });
     }
 
-    public stop(): void {
+    public stop(): Promise<void> {
         this._appInsightsClient.sendEvent("stop");
-        this.stopRunning();
+        return this.stopRunning();
     }
 
     public dispose() {
@@ -132,6 +133,7 @@ export class CodeManager implements vscode.Disposable {
             vscode.commands.executeCommand("setContext", "code-runner.codeRunning", false);
             const kill = require("tree-kill");
             kill(this._process.pid);
+            return this._closePromise;
         }
     }
 
@@ -471,6 +473,8 @@ export class CodeManager implements vscode.Disposable {
             this._outputChannel.appendLine("[Running] " + command);
         }
         this.sendRunEvent(executor, false);
+        let resolveClosePromise;
+        this._closePromise = new Promise<void>(resolve => (resolveClosePromise = resolve));
         const startTime = new Date();
         this._process = spawn(command, [], { cwd: this._cwd, shell: true });
 
@@ -495,6 +499,7 @@ export class CodeManager implements vscode.Disposable {
             if (this._isTmpFile) {
                 fs.unlinkSync(this._codeFile);
             }
+            resolveClosePromise();
         });
     }
 
