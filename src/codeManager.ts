@@ -475,7 +475,8 @@ export class CodeManager implements vscode.Disposable {
         this.sendRunEvent(executor, false);
         let resolveClosePromise;
         this._closePromise = new Promise<void>(resolve => (resolveClosePromise = resolve));
-        const startTime = new Date();
+        const { performance } = require('node:perf_hooks');
+        const startTime = performance.now();
         this._process = spawn(command, [], { cwd: this._cwd, shell: true });
 
         this._process.stdout.on("data", (data) => {
@@ -489,11 +490,11 @@ export class CodeManager implements vscode.Disposable {
         this._process.on("close", (code) => {
             this._isRunning = false;
             vscode.commands.executeCommand("setContext", "code-runner.codeRunning", false);
-            const endTime = new Date();
-            const elapsedTime = (endTime.getTime() - startTime.getTime()) / 1000;
+            const endTime = performance.now();
+            const elapsedTime = (endTime - startTime) / 1000;
             this._outputChannel.appendLine("");
             if (showExecutionMessage) {
-                this._outputChannel.appendLine("[Done] exited with code=" + code + " in " + elapsedTime + " seconds");
+                this._outputChannel.appendLine("[Done] exited with code=" + code + " in " + elapsedTime.toFixed(3) + " seconds");
                 this._outputChannel.appendLine("");
             }
             if (this._isTmpFile) {
