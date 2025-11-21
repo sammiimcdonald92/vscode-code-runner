@@ -36,11 +36,7 @@
   "sponsor": {
     "url": "https://www.patreon.com/junhan"
   },
-  "activationEvents": [
-    "onCommand:code-runner.run",
-    "onCommand:code-runner.runCustomCommand",
-    "onCommand:code-runner.runByLanguage",
-    "onStartupFinished"
+  "activationEvents": [    "onStartupFinished"
   ],
   "main": "./out/src/extension",
   "contributes": {
